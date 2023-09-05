@@ -7,20 +7,20 @@ import (
 )
 
 const (
-	dbPath = "./tmp/blocks"
+	dbPath = "./cli/tmp/blocks"
 )
 
-type BlockChain struct {
+type Blockchain struct {
 	LastHash []byte
 	Database *badger.DB
 }
 
-type BlockChainIterator struct {
+type BlockchainIterator struct {
 	CurrentHash []byte
 	Database    *badger.DB
 }
 
-func InitBlockChain() *BlockChain {
+func InitBlockchain() *Blockchain {
 	var lastHash []byte
 
 	opts := badger.DefaultOptions(dbPath)
@@ -37,6 +37,7 @@ func InitBlockChain() *BlockChain {
 			fmt.Println("Genesis proved")
 			err = txn.Set(genesis.Hash, genesis.Serialize())
 			Handle(err)
+
 			err = txn.Set([]byte("lh"), genesis.Hash)
 
 			lastHash = genesis.Hash
@@ -46,22 +47,24 @@ func InitBlockChain() *BlockChain {
 			item, err := txn.Get([]byte("lh"))
 			Handle(err)
 			lastHash, err = item.ValueCopy(nil)
+
 			return err
 		}
 	})
-
 	Handle(err)
 
-	blockchain := BlockChain{lastHash, db}
+	blockchain := Blockchain{lastHash, db}
+
 	return &blockchain
 }
 
-func (chain *BlockChain) AddBlock(data string) {
+func (chain *Blockchain) AddBlock(data string) {
 	var lastHash []byte
 
 	err := chain.Database.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("lh"))
 		Handle(err)
+
 		lastHash, err = item.ValueCopy(nil)
 
 		return err
@@ -73,6 +76,7 @@ func (chain *BlockChain) AddBlock(data string) {
 	err = chain.Database.Update(func(txn *badger.Txn) error {
 		err := txn.Set(newBlock.Hash, newBlock.Serialize())
 		Handle(err)
+
 		err = txn.Set([]byte("lh"), newBlock.Hash)
 
 		chain.LastHash = newBlock.Hash
@@ -82,13 +86,13 @@ func (chain *BlockChain) AddBlock(data string) {
 	Handle(err)
 }
 
-func (chain *BlockChain) Iterator() *BlockChainIterator {
-	iter := &BlockChainIterator{chain.LastHash, chain.Database}
+func (chain *Blockchain) Iterator() *BlockchainIterator {
+	iter := &BlockchainIterator{chain.LastHash, chain.Database}
 
 	return iter
 }
 
-func (iter *BlockChainIterator) Next() *Block {
+func (iter *BlockchainIterator) Next() *Block {
 	var block *Block
 
 	err := iter.Database.View(func(txn *badger.Txn) error {

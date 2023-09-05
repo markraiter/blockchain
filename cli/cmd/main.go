@@ -7,11 +7,11 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/markraiter/blockchain/blockchain"
+	"github.com/markraiter/blockchain/cli/blockchain"
 )
 
 type CommandLine struct {
-	blockchain *blockchain.BlockChain
+	blockchain *blockchain.Blockchain
 }
 
 func (cli *CommandLine) printUsage() {
@@ -38,9 +38,10 @@ func (cli *CommandLine) printChain() {
 	for {
 		block := iter.Next()
 
-		fmt.Printf("Prev. hash: %x\n", block.PrevHash)
+		fmt.Printf("Previous hash: %x\n", block.PrevHash)
 		fmt.Printf("Data: %s\n", block.Data)
 		fmt.Printf("Hash: %x\n", block.Hash)
+
 		pow := blockchain.NewProof(block)
 		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
 		fmt.Println()
@@ -87,7 +88,7 @@ func (cli *CommandLine) run() {
 
 func main() {
 	defer os.Exit(0)
-	chain := blockchain.InitBlockChain()
+	chain := blockchain.InitBlockchain()
 	defer chain.Database.Close()
 
 	cli := CommandLine{chain}
